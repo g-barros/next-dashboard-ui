@@ -18,7 +18,7 @@ export default function SingleStudentPage() {
               <p className="text-sm text-gray-500">Lorem ipsum dolor sit amet consectetur adipisicing elit.</p>
               <div className="flex items-center justify-bestween gap-2 flex-wrap text-xs font-medium">
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
-                  <Image src='/bloog.png' alt="" width={14} height={14} />
+                  <Image src='/blood.png' alt="" width={14} height={14} />
                   <span>A</span>
                 </div>
                 <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
@@ -76,11 +76,11 @@ export default function SingleStudentPage() {
         <div className="bg-white p-4 rounded-md">
           <h1 className="text-xl font-semibold">Shortcuts</h1>
           <div className="mt-4 flex gap-4 flex-wrap text-sm text-gray-500">
-            <Link className="p-3 rounded-md bg-lamaYellowLight" href="/" >Student&apos;s Lessons</Link>
-            <Link className="p-3 rounded-md bg-lamaPurpleLight" href="/" >Student&apos;s Teachers</Link>
-            <Link className="p-3 rounded-md bg-lamaSkyLight" href="/" >Student&apos;s Exams</Link>
-            <Link className="p-3 rounded-md bg-pink-50" href="/" >Student&apos;s Assignments</Link>
-            <Link className="p-3 rounded-md bg-lamaSkyLight" href="/" >Student&apos;s Results</Link>
+            <Link className="p-3 rounded-md bg-lamaYellowLight" href={`/list/lessons?classId=${2}`} >Student&apos;s Lessons</Link>
+            <Link className="p-3 rounded-md bg-lamaPurpleLight" href={`/list/teachers?classId=${2}`} >Student&apos;s Teachers</Link>
+            <Link className="p-3 rounded-md bg-lamaSkyLight" href={`/list/exams?classId=${2}`} >Student&apos;s Exams</Link>
+            <Link className="p-3 rounded-md bg-pink-50" href={`/list/assignments?classId=${2}`} >Student&apos;s Assignments</Link>
+            <Link className="p-3 rounded-md bg-lamaSkyLight" href={`/list/results?studentId=${"student2"}`} >Student&apos;s Results</Link>
           </div>
         </div>
         <Performance />
