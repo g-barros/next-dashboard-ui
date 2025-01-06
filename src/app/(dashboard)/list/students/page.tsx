@@ -2,9 +2,9 @@ import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
+import { role } from "@/lib/utils";
 import { Class, Prisma, Student } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -36,10 +36,10 @@ const columns = [
     acessor:"address",
     className:"hidden lg:table-cell",
   },
-  {
+  ...(role === "admin" ? [{
     header: "Actions",
     acessor:"action",
-  },
+  }] : []),
 ]
 
 const renderRow = (item: StudentList) => (
@@ -63,9 +63,6 @@ const renderRow = (item: StudentList) => (
           </button>
         </Link>
         {role === "admin" && (
-          // <button className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaPurple">
-          //   <Image src="/delete.png" alt="" width={16} height={16} />
-          // </button>
           <>              
             <FormModal table="student" type="delete" id={item.id} />
           </>
@@ -125,9 +122,6 @@ export default async function StudentsListPage({searchParams}: { searchParams: {
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
             {role === "admin" && (
-              // <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              //   <Image src="/plus.png" alt="" width={14} height={14} />
-              // </button>
               <FormModal table="student" type="create"/>
             )}
           </div>

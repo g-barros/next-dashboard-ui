@@ -2,11 +2,12 @@ import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
+import { currentUserId, role } from "@/lib/utils";
 import { Announcement, Class, Prisma } from "@prisma/client";
 import Image from "next/image";
+
 
 type AnnoucementList = Announcement & { class: Class }
 
@@ -24,10 +25,10 @@ const columns = [
     acessor:"date",
     className:"hidden md:table-cell",
   },
-  {
+  ...(role === "admin" ? [{
     header: "Actions",
     acessor:"action",
-  },
+  }] : []),
 ]
 
 const renderRow = (item: AnnoucementList) => (
@@ -37,7 +38,7 @@ const renderRow = (item: AnnoucementList) => (
         <h3 className="font-semibold">{item.title}</h3>
       </div>
     </td>
-    <td className="hidden md:table-cell">{item.class.name}</td>
+    <td className="hidden md:table-cell">{item.class?.name || "-"}</td>
     <td className="hidden md:table-cell">{new Intl.DateTimeFormat("pt-BR").format(item.date)}</td>
     <td>
       <div className="flex items-center gap-2">
@@ -73,6 +74,19 @@ export default async function AnnouncementsListPage({searchParams}: { searchPara
       }
     }
   }
+
+  const roleConditions = {
+    teacher: { lessons: { some: { teacherId: currentUserId } } },
+    student: { students: { some: { id: currentUserId } } },
+    parent: { students: { some: { parentId: currentUserId } } },
+  };
+  
+  query.OR = [
+    { classId: null},
+    {
+      class: roleConditions[role as keyof typeof roleConditions] || {},
+    },
+  ];  
 
   const [announcementsList, announcementsCount] = await prisma.$transaction([
     prisma.announcement.findMany({

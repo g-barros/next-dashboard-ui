@@ -2,9 +2,9 @@ import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
+import { currentUserId, role } from "@/lib/utils";
 import { Class, Event, Prisma } from "@prisma/client";
 import Image from "next/image";
 
@@ -34,10 +34,10 @@ const columns = [
     acessor:"endTime",
     className:"hidden md:table-cell",
   }, 
-  {
+  ...(role === "admin" ? [{
     header: "Actions",
     acessor:"action",
-  },
+  }] : []),
 ]
 
   const renderRow = (item: EventList) => (
@@ -47,7 +47,7 @@ const columns = [
           <h3 className="font-semibold">{item.title}</h3>
         </div>
       </td>
-      <td className="hidden md:table-cell">{item.class.name}</td>
+      <td className="hidden md:table-cell">{item.class?.name || "-"}</td>
       <td className="hidden md:table-cell">{new Intl.DateTimeFormat("pt-BR").format(item.startTime)}</td>
       <td className="hidden md:table-cell">{item.startTime.toLocaleTimeString("pt-BR", {
         hour:"2-digit",
@@ -73,7 +73,7 @@ const columns = [
   );
 
 export default async function EventsListPage({searchParams}: { searchParams: { [key: string]: string | undefined } }) {
-
+  
   const { page, ...queryParams } = searchParams;
 
   const p = page ? parseInt(page) : 1;
@@ -93,6 +93,19 @@ export default async function EventsListPage({searchParams}: { searchParams: { [
       }
     }
   }
+
+  const roleConditions = {
+    teacher: { lessons: { some: { teacherId: currentUserId } } },
+    student: { students: { some: { id: currentUserId } } },
+    parent: { students: { some: { parentId: currentUserId } } },
+  };
+
+  query.OR = [
+    { classId: null},
+    {
+      class: roleConditions[role as keyof typeof roleConditions] || {},
+    },
+  ];
 
   const [eventsList, eventsCount] = await prisma.$transaction([
     prisma.event.findMany({

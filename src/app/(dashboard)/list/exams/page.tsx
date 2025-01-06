@@ -2,9 +2,9 @@ import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
-import { role } from "@/lib/data";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
+import { currentUserId, role } from "@/lib/utils";
 import { Class, Exam, Prisma, Subject, Teacher } from "@prisma/client";
 import Image from "next/image";
 
@@ -29,10 +29,10 @@ const columns = [
     acessor:"date",
     className:"hidden md:table-cell",
   }, 
-  {
+  ...(role === "admin" || role === "teacher" ? [{
     header: "Actions",
     acessor:"action",
-  },
+  }] : []),
 ]
 
 const renderRow = (item: ExamList) => (
@@ -47,7 +47,7 @@ const renderRow = (item: ExamList) => (
       <td className="hidden md:table-cell">{new Intl.DateTimeFormat("pt-BR").format(item.startTime)}</td>
       <td>
         <div className="flex items-center gap-2">
-          {role === "admin" || role === "teacher" && (
+          {(role === "admin" || role === "teacher") && (
             <>
               <FormModal table="exam" type="update" data={item} />
               <FormModal table="exam" type="delete" id={item.id} />
@@ -66,22 +66,22 @@ export default async function ExamsListPage({searchParams}: { searchParams: { [k
 
   const query: Prisma.ExamWhereInput = {};
 
+  query.lesson = {};
+
   if (queryParams) {
     for (const [key,value] of Object.entries(queryParams)) {
       if (value !== undefined) {
         switch(key) {
           case "teacherId":
-            query.lesson = { teacherId: value };
+            query.lesson.teacherId = value;
             break;
           case "classId":
-              query.lesson = { classId: parseInt(value) };
-              break;
+            query.lesson.classId = parseInt(value);
+            break;
           case "search":
-            query.lesson = {
-              subject: {
-                name: { contains: value, mode:"insensitive" }
-              }
-            }
+            query.lesson.subject = {
+              name: { contains: value, mode:"insensitive" }
+            };
             break;
           default:
             break;
@@ -89,6 +89,34 @@ export default async function ExamsListPage({searchParams}: { searchParams: { [k
       }
     }
   }
+
+    switch (role) {
+      case "admin":
+        break;    
+      case "teacher":
+        query.lesson.teacherId = currentUserId!;
+        break;    
+      case "student":
+        query.lesson.class = {
+          students: {
+            some: {
+              id: currentUserId!,
+            }
+          }
+        };
+        break;
+      case "parent":
+          query.lesson.class = {
+            students: {
+              some: {
+                parentId: currentUserId!,
+              }
+            }
+          };
+          break;      
+      default:
+        break;
+    }
 
   const [examsList, examsCount] = await prisma.$transaction([
     prisma.exam.findMany({
@@ -123,10 +151,7 @@ export default async function ExamsListPage({searchParams}: { searchParams: { [k
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" && (
-              // <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
-              //   <Image src="/plus.png" alt="" width={14} height={14} />
-              // </button>
+            {(role === "admin" || role === "teacher") && (
               <FormModal table="exam" type="create" />                          
             )}
           </div>
