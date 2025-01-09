@@ -4,42 +4,49 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
-import { currentUserId, role } from "@/lib/utils";
+import { auth } from "@clerk/nextjs/server";
 import { Class, Event, Prisma } from "@prisma/client";
 import Image from "next/image";
 
 type EventList = Event & { class: Class };
 
-const columns = [
-  {
-    header: "Title",
-    acessor:"title",
-  },
-  {
-    header: "Class",
-    acessor:"class",
-  }, 
-  {
-    header: "Date",
-    acessor:"date",
-    className:"hidden md:table-cell",
-  }, 
-  {
-    header: "Start Time",
-    acessor:"startTime",
-    className:"hidden md:table-cell",
-  }, 
-  {
-    header: "End Time",
-    acessor:"endTime",
-    className:"hidden md:table-cell",
-  }, 
-  ...(role === "admin" ? [{
-    header: "Actions",
-    acessor:"action",
-  }] : []),
-]
+export default async function EventsListPage({searchParams}: { searchParams: { [key: string]: string | undefined } }) {
 
+  const { userId, sessionClaims } = await auth();
+    
+  const role = (sessionClaims?.metadata as { role?: "admin" | "teacher" | "student" | "parent" })?.role;
+  const currentUserId = userId;
+
+  const columns = [
+    {
+      header: "Title",
+      acessor:"title",
+    },
+    {
+      header: "Class",
+      acessor:"class",
+    }, 
+    {
+      header: "Date",
+      acessor:"date",
+      className:"hidden md:table-cell",
+    }, 
+    {
+      header: "Start Time",
+      acessor:"startTime",
+      className:"hidden md:table-cell",
+    }, 
+    {
+      header: "End Time",
+      acessor:"endTime",
+      className:"hidden md:table-cell",
+    }, 
+    ...(role === "admin" ? [{
+      header: "Actions",
+      acessor:"action",
+    }] : []),
+  ];
+  
   const renderRow = (item: EventList) => (
     <tr key={item.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-lamaPurpleLight">
       <td className="flex items-center gap-4 p-4">        
@@ -71,8 +78,6 @@ const columns = [
       </td>
     </tr>
   );
-
-export default async function EventsListPage({searchParams}: { searchParams: { [key: string]: string | undefined } }) {
   
   const { page, ...queryParams } = searchParams;
 
@@ -95,9 +100,9 @@ export default async function EventsListPage({searchParams}: { searchParams: { [
   }
 
   const roleConditions = {
-    teacher: { lessons: { some: { teacherId: currentUserId } } },
-    student: { students: { some: { id: currentUserId } } },
-    parent: { students: { some: { parentId: currentUserId } } },
+    teacher: { lessons: { some: { teacherId: currentUserId! } } },
+    student: { students: { some: { id: currentUserId! } } },
+    parent: { students: { some: { parentId: currentUserId! } } },
   };
 
   query.OR = [
